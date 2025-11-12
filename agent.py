@@ -8,3 +8,7 @@ Defines the main agent logic:
 """
 
 from api import call_model_chat_completions
+
+def run_agent(input: str) -> str:
+    #TODO: add decisioning for which reasoning strategy to use
+    return call_model_chat_completions(input)["text"]
