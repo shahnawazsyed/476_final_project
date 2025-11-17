@@ -9,6 +9,7 @@ def call_model_chat_completions(prompt: str,
                                 system: str = "You are a helpful assistant. Reply with only the final answer—no explanation.",
                                 model: str = MODEL,
                                 temperature: float = 0.0,
+                                max_tokens: int = 512,
                                 timeout: int = 60) -> dict:
     """
     Calls an OpenAI-style /v1/chat/completions endpoint and returns:
@@ -26,7 +27,7 @@ def call_model_chat_completions(prompt: str,
             {"role": "user",   "content": prompt}
         ],
         "temperature": temperature,
-        "max_tokens": 128,
+        "max_tokens": max_tokens,
     }
 
     try:
