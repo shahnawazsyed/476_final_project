@@ -11,15 +11,29 @@ Responsibilities:
 """
 
 import json
+from agent import run_agent
+
+
+
+def main():
+    input_path = "data/cse476_final_project_dev_data.json"
+    output_path = "outputs/output.json"
+
+    with open(input_path, "r") as f:
+        inputs = json.load(f)
+    results = []
+    for input in inputs:
+        prompt = input["input"]
+        #print("Trying", prompt)
+        response = run_agent(prompt)
+        results.append({"prompt": prompt, "response": response})
+        #TODO: call agent.py with the prompt
+    
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+
+    print(f"Saved results to {output_path}")
 
 
 if __name__ == "__main__":
     main()
-
-def main():
-    input_path = "data/cse476_final_project_dev_data.json"
-    with open(input_path, "r") as f:
-        inputs = json.load(f)
-    for input in inputs:
-        pass
-        #TODO: call agent.py with the prompt
