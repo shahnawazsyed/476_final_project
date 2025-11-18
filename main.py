@@ -34,7 +34,8 @@ def main():
     predictions = []
     for i, input_item in tqdm(enumerate(inputs)):
         prompt = input_item["input"]
-        prediction = run_agent(prompt)
+        domain = input_item["domain"]
+        prediction = run_agent(prompt, domain)
         predictions.append({
             "id": input_item.get("id", i),
             "domain": input_item.get("domain", "unknown"),
