@@ -9,7 +9,9 @@ Defines the main agent logic:
 
 from strategies import chain_of_thought
 
-def run_agent(prompt: str) -> str:
+def run_agent(prompt: str, domain: str) -> str:
     #TODO: add decisioning for which reasoning strategy to use
-    result = chain_of_thought(prompt)
+    if domain is "math":
+        isMath = True
+    result = chain_of_thought(prompt, isMath=True)
     return result
