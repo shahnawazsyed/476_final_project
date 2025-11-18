@@ -10,29 +10,52 @@ Responsibilities:
 4. Ensure efficient execution (<20 API calls per instance).
 """
 
+from datetime import datetime
 import json
 from agent import run_agent
-
+from tqdm import tqdm
+import random
+from evaluate import evaluate_outputs
 
 
 def main():
     input_path = "data/cse476_final_project_dev_data.json"
-    output_path = "outputs/output.json"
-
+    predictions_path = "outputs/predictions.jsonl"
     with open(input_path, "r") as f:
-        inputs = json.load(f)
-    results = []
-    for input in inputs:
-        prompt = input["input"]
-        #print("Trying", prompt)
-        response = run_agent(prompt)
-        results.append({"prompt": prompt, "response": response})
-        #TODO: call agent.py with the prompt
-    
-    with open(output_path, "w") as f:
-        json.dump(results, f, indent=2)
-
-    print(f"Saved results to {output_path}")
+        all_inputs = json.load(f)
+    SAMPLE_SIZE = 100
+    if SAMPLE_SIZE and len(all_inputs) > SAMPLE_SIZE:
+        random.seed(42)
+        inputs = random.sample(all_inputs, SAMPLE_SIZE)
+        print(f"Randomly sampled {SAMPLE_SIZE} instances from {len(all_inputs)} total")
+    else:
+        inputs = all_inputs
+        print(f"Processing all {len(inputs)} instances")
+    predictions = []
+    for i, input_item in tqdm(enumerate(inputs)):
+        prompt = input_item["input"]
+        prediction = run_agent(prompt)
+        predictions.append({
+            "id": input_item.get("id", i),
+            "domain": input_item.get("domain", "unknown"),
+            "input": prompt,
+            "expected_output": input_item.get("output", ""),
+            "prediction": prediction
+        })
+    with open(predictions_path, 'w') as f:
+        for pred in predictions:
+            f.write(json.dumps(pred) + '\n')
+    print(f"\nPredictions saved to {predictions_path}")
+    eval_results = evaluate_outputs(
+        test_data=inputs,
+        predictions=[p["prediction"] for p in predictions],
+        verbose=True
+    )
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    eval_output_path = f"outputs/{timestamp}_eval.json"
+    with open(eval_output_path, 'w') as f:
+        json.dump(eval_results, f, indent=2)
+    print(f"\nEvaluation results saved to {eval_output_path}")
 
 
 if __name__ == "__main__":
