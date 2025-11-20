@@ -7,14 +7,12 @@ Defines the main agent logic:
 - Calls `call_model_chat_completions()` from api.py indirectly via strategies.
 """
 
-from strategies import chain_of_thought
+from strategies import chain_of_thought, self_consistency
 
 def run_agent(prompt: str, domain: str) -> str:
     #TODO: add decisioning for which reasoning strategy to use
     if domain == "math":
-        isMath = True
+        result = self_consistency(prompt, True)
     else:
-        isMath = False
-    #print(isMath)
-    result = chain_of_thought(prompt, isMath)
+        result = chain_of_thought(prompt, False)
     return result
