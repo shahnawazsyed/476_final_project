@@ -108,12 +108,13 @@ def chain_of_thought(prompt: str, temp: float = 0.0) -> str: #could be good for 
 def self_refine(prompt: str, domain: str, temp: float = 0.0) -> str:
     initial_ans = call_model_chat_completions(prompt=prompt, max_tokens=4096, temperature=temp)["text"]
     refine_sys_prompt = f"You are a critical evaluator specializing in {domain}. Review the answer provided and give constructive feedback on how to improve it. Focus on accuracy, completeness, clarity, and relevance to {domain}. Point out any errors, missing information, or areas that need better explanation. Be specific about what needs improvement."
+    new_ans = initial_ans
     for _ in range (6):
-        feedback = call_model_chat_completions(prompt=initial_ans, system=refine_sys_prompt, max_tokens=4096, temperature=temp)["text"]
+        feedback = call_model_chat_completions(prompt=new_ans, system=refine_sys_prompt, max_tokens=4096, temperature=temp)["text"]
         sentiment_score = sentiment_score("api", feedback)
         if sentiment_score > 0.8:
             break 
-        formatted_feedback = f"You are a helpful assistant. You previously provided an answer, but it needs improvement. Here is the feedback you received:\n\n{feedback}\n\nPlease provide a revised answer that addresses this feedback and improves upon your previous response."
+        formatted_feedback = f"You are a helpful assistant. You previously provided this answer:\n\n{new_ans}\n\nHere is the feedback you received:\n\n{feedback}\n\nPlease provide a revised answer that addresses this feedback and improves upon your previous response."
         new_ans = call_model_chat_completions(prompt=prompt, system=formatted_feedback, max_tokens=4096, temperature=temp)["text"]
     return new_ans
 
