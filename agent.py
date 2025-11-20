@@ -16,7 +16,11 @@ def run_agent(prompt: str, domain: str) -> str:
     elif domain == "common_sense":
         result = self_consistency(prompt, False)
     elif domain == "planning" or domain == "coding":
-        result = self_refine(prompt, domain)
+        if domain == "coding":
+            new_prompt = f"{prompt}\n\nImportant: Provide only the code without any comments or explanations."
+            result = self_refine(new_prompt, domain)
+        else:
+            result = self_refine(prompt, domain)
     else:
         print(f"Domain: {domain} not covered")
         result = chain_of_thought(prompt)
