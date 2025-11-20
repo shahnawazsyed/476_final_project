@@ -18,5 +18,6 @@ def run_agent(prompt: str, domain: str) -> str:
     elif domain == "planning" or domain == "coding":
         result = self_refine(prompt, domain)
     else:
+        print(f"Domain: {domain} not covered")
         result = chain_of_thought(prompt)
     return result
