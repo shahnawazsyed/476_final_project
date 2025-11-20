@@ -16,7 +16,7 @@ def run_agent(prompt: str, domain: str) -> str:
     elif domain == "common_sense":
         result = self_consistency(prompt, False)
     elif domain == "planning" or domain == "coding":
-        result = self_refine(prompt)
+        result = self_refine(prompt, domain)
     else:
         result = chain_of_thought(prompt)
     return result
