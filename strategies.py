@@ -10,6 +10,7 @@ self consistency -- maybe for math, common sense,
 
 """
 from api import call_model_chat_completions
+import random
 
 def convertToPlainText(prompt: str):
     conversion_sys_prompt = """
@@ -68,6 +69,19 @@ def convertToPlainText(prompt: str):
     return ans.strip() if ans is not None else ""
 
 #need somethign else for plannign
+
+def self_consistency(prompt: str, isMath: bool = False, num_samples: int = 9):
+    results = {}
+    for _ in range(num_samples):
+        temp = random.uniform(0.5, 1.0)
+        ans = chain_of_thought(prompt, isMath, temp=temp)
+        if ans in results.keys():
+            results[ans] += 1
+        else:
+            results[ans] = 1
+    print("len results", len(results))
+    max_ans = max(results, key=results.get)
+    return max_ans
 
 
 

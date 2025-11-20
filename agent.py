@@ -13,6 +13,8 @@ def run_agent(prompt: str, domain: str) -> str:
     #TODO: add decisioning for which reasoning strategy to use
     if domain == "math":
         result = self_consistency(prompt, True)
+    elif domain == "common_sense":
+        result = self_consistency(prompt, False)
     else:
         result = chain_of_thought(prompt, False)
     return result
