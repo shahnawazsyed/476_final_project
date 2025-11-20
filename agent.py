@@ -16,5 +16,5 @@ def run_agent(prompt: str, domain: str) -> str:
     elif domain == "common_sense":
         result = self_consistency(prompt, False)
     else:
-        result = chain_of_thought(prompt, False)
+        result = chain_of_thought(prompt)
     return result

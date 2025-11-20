@@ -68,13 +68,13 @@ def convertToPlainText(prompt: str):
     ans = call_model_chat_completions(prompt=prompt, system=conversion_sys_prompt, max_tokens=4096)["text"]
     return ans.strip() if ans is not None else ""
 
-#need somethign else for plannign
-
 def self_consistency(prompt: str, isMath: bool = False, num_samples: int = 9):
     results = {}
+    if isMath:
+        prompt = convertToPlainText(prompt)
     for _ in range(num_samples):
-        temp = random.uniform(0.5, 1.0)
-        ans = chain_of_thought(prompt, isMath, temp=temp)
+        temp = random.uniform(0.5, 1.0) #could change range depending on domain
+        ans = chain_of_thought(prompt, temp=temp)
         if ans in results.keys():
             results[ans] += 1
         else:
@@ -84,16 +84,11 @@ def self_consistency(prompt: str, isMath: bool = False, num_samples: int = 9):
     return max_ans
 
 
-
-def chain_of_thought(prompt: str, isMath: bool = False, temp: float = 0.0) -> str: #could be good for planning, coding, future prediction (?)
+def chain_of_thought(prompt: str, temp: float = 0.0) -> str: #could be good for planning, coding, future prediction (?)
     """
     Chain-of-Thought (CoT) inference strategy.
     Encourages the model to reason step by step before extracting a deterministic answer.
     """
-    #print(prompt)
-    if isMath:
-        prompt = convertToPlainText(prompt)
-        #print(prompt)
     cot_instruction = (
         "Think through this problem step by step and solve it completely. "
         "You must provide a complete solution, not just validate or critique. "
@@ -101,12 +96,10 @@ def chain_of_thought(prompt: str, isMath: bool = False, temp: float = 0.0) -> st
     )
     cot_system_prompt = "You are a problem-solving assistant. Always provide complete solutions."
     reasoning_resp = call_model_chat_completions(prompt=prompt, system=cot_system_prompt+" "+cot_instruction, max_tokens=4096, temperature=temp)["text"]
-    #print(reasoning_resp)
     extract_answer_system_prompt = (
         "Extract the complete final answer from this solution. "
         "For plans, extract all the steps. For numerical answers, extract just the number. "
         "Reply with only the answer itself."
     )
     answer = call_model_chat_completions(prompt=reasoning_resp, system=extract_answer_system_prompt, max_tokens=2048, temperature=temp)["text"]
-    #print(answer)
     return answer.strip() if answer is not None else ""
