@@ -19,6 +19,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 #TODO: play around with temperature more
 #TODO: compare nltk/LLM call
 #TODO: add google search for common sense?
+#TODO: coding shouldn't have comments
 
 
 def convertToPlainText(prompt: str):
@@ -123,7 +124,7 @@ def get_sentiment_score(method: str, input: str):
 
 def self_refine(prompt: str, domain: str, temp: float = 0.0) -> str:
     initial_ans = call_model_chat_completions(prompt=prompt, max_tokens=4096, temperature=temp)["text"]
-    refine_sys_prompt = f"You are a critical evaluator specializing in {domain}. Review the answer provided and give constructive feedback on how to improve it. Focus on accuracy, completeness, clarity, and relevance to {domain}. Point out any errors, missing information, or areas that need better explanation. Be specific about what needs improvement."
+    refine_sys_prompt = f"You are a critical evaluator specializing in {domain}. Review the answer provided to the following prompt: {prompt} and give constructive feedback on how to improve it. Focus on accuracy, completeness, clarity, and relevance to {domain}. Point out any errors, missing information, or areas that need better explanation. Be specific about what needs improvement."
     new_ans = initial_ans
     for _ in range (6):
         feedback = call_model_chat_completions(prompt=new_ans, system=refine_sys_prompt, max_tokens=4096, temperature=temp)["text"]
