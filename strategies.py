@@ -13,13 +13,7 @@ DOMAINS: math, common sense, future prediction, coding, planning
 """
 from api import call_model_chat_completions #
 import random
-from nltk.sentiment import SentimentIntensityAnalyzer
 
-#TODO: track # of api calls
-#TODO: play around with temperature more
-#TODO: compare nltk/LLM call
-#TODO: add google search for common sense?
-#TODO: coding shouldn't have comments
 
 
 def convertToPlainText(prompt: str):
@@ -113,13 +107,9 @@ def chain_of_thought(prompt: str, temp: float = 0.0) -> str: #could be good for 
     answer = call_model_chat_completions(prompt=reasoning_resp, system=extract_answer_system_prompt, max_tokens=2048, temperature=temp)["text"]
     return answer.strip() if answer is not None else ""
 
-def get_sentiment_score(method: str, input: str):
-    if method == "api":
-        sentiment_prompt = f"Rate the sentiment of this feedback with respect to how correct and high-quality the answer is, from -1 (very negative, many issues) to 1 (very positive, excellent answer). Return only a number (float):\n\n{input}"
-        sentiment_score = float(call_model_chat_completions(prompt=sentiment_prompt, max_tokens=16, temperature=0.0)["text"].strip())
-    else:
-        sia = SentimentIntensityAnalyzer()
-        sentiment_score = sia.polarity_scores(input)['compound']
+def get_sentiment_score(input: str):
+    sentiment_prompt = f"Rate the sentiment of this feedback with respect to how correct and high-quality the answer is, from -1 (very negative, many issues) to 1 (very positive, excellent answer). Return only a number (float):\n\n{input}"
+    sentiment_score = float(call_model_chat_completions(prompt=sentiment_prompt, max_tokens=16, temperature=0.0)["text"].strip())
     return sentiment_score
 
 def self_refine(prompt: str, domain: str, temp: float = 0.0) -> str:
@@ -128,11 +118,29 @@ def self_refine(prompt: str, domain: str, temp: float = 0.0) -> str:
     new_ans = initial_ans
     for _ in range (6):
         feedback = call_model_chat_completions(prompt=new_ans, system=refine_sys_prompt, max_tokens=4096, temperature=temp)["text"]
-        sentiment_score = get_sentiment_score("api", feedback)
-        print("\nSentiment: ", sentiment_score)
+        sentiment_score = get_sentiment_score(feedback)
+        #print("\nSentiment: ", sentiment_score)
         if sentiment_score > 0.7:
             break 
         formatted_feedback = f"You are a helpful assistant. You previously provided this answer:\n\n{new_ans}\n\nHere is the feedback you received:\n\n{feedback}\n\nPlease provide a revised answer that addresses this feedback and improves upon your previous response."
         new_ans = call_model_chat_completions(prompt=prompt, system=formatted_feedback, max_tokens=4096, temperature=temp)["text"]
     return new_ans
+
+def assumption_explicit_reasoning(prompt: str, domain: str, temp: float = 0.0) -> str:
+    init_ans = chain_of_thought(prompt, temp)
+    extraction_sys_prompt = (
+        f"You are a critical evaluator specializing in {domain}. our task is to read the provided draft answer and extract all implicit assumptions that must be true for that answer to hold. Return only assumptions. "
+    "Each assumption must be explicit, minimal, falsifiable, and phrased as a concrete condition about the world, data, behavior, or model inputs. Do not justify or evaluate them."
+    "Do not restate the draft answer."
+    "List assumptions as numbered items."
+    )
+    assumptions = call_model_chat_completions(prompt=init_ans, system=extraction_sys_prompt, max_tokens=4096)["text"]
+    final_sys_prompt = f"You are a {domain} expert. You are given the original prompt and a list of assumptions that must hold for an answer. Generate a final answer that is consistent with the assumptions. If an assumption is unrealistic or likely false, note this explicitly. Assumptions: {assumptions}"
+    final_answer = call_model_chat_completions( #possibly add self refinement here
+        prompt=prompt,
+        system=final_sys_prompt,
+        max_tokens=4096
+    )["text"]
+    return final_answer
+
 
