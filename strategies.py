@@ -112,11 +112,11 @@ def get_sentiment_score(input: str):
     sentiment_score = float(call_model_chat_completions(prompt=sentiment_prompt, max_tokens=16, temperature=0.0)["text"].strip())
     return sentiment_score
 
-def self_refine(prompt: str, domain: str, temp: float = 0.0) -> str:
+def self_refine(prompt: str, domain: str, temp: float = 0.0, max_iter=6) -> str:
     initial_ans = call_model_chat_completions(prompt=prompt, max_tokens=4096, temperature=temp)["text"]
     refine_sys_prompt = f"You are a critical evaluator specializing in {domain}. Review the answer provided to the following prompt: {prompt} and give constructive feedback on how to improve it. Focus on accuracy, completeness, clarity, and relevance to {domain}. Point out any errors, missing information, or areas that need better explanation. Be specific about what needs improvement."
     new_ans = initial_ans
-    for _ in range (6):
+    for _ in range (max_iter):
         feedback = call_model_chat_completions(prompt=new_ans, system=refine_sys_prompt, max_tokens=4096, temperature=temp)["text"]
         sentiment_score = get_sentiment_score(feedback)
         #print("\nSentiment: ", sentiment_score)
@@ -136,6 +136,7 @@ def assumption_explicit_reasoning(prompt: str, domain: str, temp: float = 0.0) -
     )
     assumptions = call_model_chat_completions(prompt=init_ans, system=extraction_sys_prompt, max_tokens=4096)["text"]
     final_sys_prompt = f"You are a {domain} expert. You are given the original prompt and a list of assumptions that must hold for an answer. Generate a final answer that is consistent with the assumptions. If an assumption is unrealistic or likely false, note this explicitly. Assumptions: {assumptions}"
+    final_answer=self_refine(prompt, domain, max_iter=4) #double check max_iter
     final_answer = call_model_chat_completions( #possibly add self refinement here
         prompt=prompt,
         system=final_sys_prompt,
